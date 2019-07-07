@@ -21,20 +21,20 @@ from Crypto.PublicKey import RSA
 
 cam_ips = [
     # (      OLD     ,        NEW      )
-    ('192.168.1.201', '192.168.1.201')
+    ('192.168.15.42', '192.168.15.42')
 ]
 
-new_gateway = '192.168.1.1'
-new_ntp = '192.168.1.1'
-time_zone_gmt_offset = '+5:00:00'
+new_gateway = '192.168.15.1'
+new_ntp = 'time.windows.com'
+time_zone_gmt_offset = '-3:00:00'
 
 admin_user_name = 'admin'
-admin_old_password = 'qwer1234'
-admin_new_password = 'qwer1234'
+admin_old_password = 'Esiexata2017'
+admin_new_password = 'Esiexata2017'
 
-video_user_name = 'video'
-video_user_password = 'qwer1234'
-allow_videouser_downloading_records = False
+video_user_name = 'kitmd'
+video_user_password = '200500'
+allow_videouser_downloading_records = True
 
 mjpeg_stream_width = 640
 mjpeg_stream_height = 480
@@ -160,34 +160,61 @@ osd_set_request = """\
     </normalizedScreenSize>
     <attribute>
         <transparent>false</transparent>
-        <flashing>false</flashing>
+        <flashing>True</flashing>
     </attribute>
     <fontSize>adaptive</fontSize>
-    <TextOverlayList size="4"></TextOverlayList>
-    <DateTimeOverlay>
+    <TextOverlayList size="16"></TextOverlayList>
+       <id>1</id>
         <enabled>true</enabled>
-        <positionX>0</positionX>
+        <positionX>16.000000</positionX>
+        <positionY>496.000000</positionY>
+        <displayText>teste overlay</displayText>        
+        <DateTimeOverlay>
+        <enabled>true</enabled>
+        <positionX>500</positionX>
         <positionY>544</positionY>
-        <dateStyle>YYYY-MM-DD</dateStyle>
+        <dateStyle>DD-MM-YYYY</dateStyle>
         <timeStyle>24hour</timeStyle>
         <displayWeek>false</displayWeek>
     </DateTimeOverlay>
     <channelNameOverlay>
-        <enabled>false</enabled>
-        <positionX>512</positionX>
+        <enabled>true</enabled>
+        <positionX>120</positionX>
         <positionY>64</positionY>
-    </channelNameOverlay>
+        <message>teste</message>
+        
+        </channelNameOverlay>
     <frontColorMode>auto</frontColorMode>
     <frontColor>000000</frontColor>
 </VideoOverlay>
 """
+
+
+# set overlay text
+
+osd_set_text = """\
+<?xml version="1.0" encoding="UTF-8" ?>
+<VideoOverlay>
+    <fontSize>2</fontSize>
+    <TextOverlayList>
+        <TextOverlay>
+            <id>1</id>
+            <enabled>true</enabled>
+            <positionX>0</positionX>
+            <positionY>0</positionY>
+            <displayText>teste 01</displayText>
+        </TextOverlay>
+    </TextOverlayList>
+</VideoOverlay>
+"""
+
 
 video_set_request = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <StreamingChannelList>
     <StreamingChannel>
         <id>1</id>
-        <channelName>Camera 01</channelName>
+        <channelName>nome da camero</channelName>
         <enabled>true</enabled>
         <Transport>
             <maxPacketSize>1000</maxPacketSize>
@@ -244,7 +271,7 @@ video_set_request = """\
     </StreamingChannel>
     <StreamingChannel>
         <id>2</id>
-        <channelName>Camera 01</channelName>
+        <channelName>Cam 01!!!!</channelName>
         <enabled>true</enabled>
         <Transport>
             <maxPacketSize>1000</maxPacketSize>
@@ -411,6 +438,7 @@ def set_ntp(auth_type, cam_ip, password):
 
 def set_ip(auth_type, cam_ip, new_ip, password):
     request = ElementTree.fromstring(ip_set_request)
+    #print(request)
 
     ip_element = request.find('ipAddress')
     ip_element.text = new_ip
@@ -461,6 +489,43 @@ def reboot_cam(auth_type, cam_ip):
 
 def set_osd(auth_type, cam_ip, password):
     process_request(auth_type, cam_ip, osd_url, password, osd_set_request, 'OSD set')
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+def set_osd_text(auth_type, cam_ip, password):
+
+
+    request = ElementTree.fromstring(osd_set_text)
+
+    master_element = request.find('TextOverlayList')
+    print(master_element)
+
+    text_element = master_element.find('TextOverlay')
+    id_element = text_element.find('id')
+    print(id_element)
+    id_element = '2'
+
+    text1_element = text_element.find('displayText')
+    text1_element.text = 'novo '
+
+
+    request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
+
+    print (request_data)
+    #message = 'IP set to %s, gateway %s' % (new_ip, new_gateway)
+
+    #process_request(auth_type, cam_ip, ip_url, password, request_data, message, 'Reboot Required')
+
+    process_request(auth_type, cam_ip, osd_url, password, osd_set_text, 'OSD set text')
+
+
 
 
 def set_off_ip_ban_option(auth_type, cam_ip, password):
@@ -825,8 +890,8 @@ def main():
                 auth_type = get_auth_type(current_cam_ip, current_password)
                 if auth_type == AuthType.UNAUTHORISED:
                     raise RuntimeError("Unauthorised! Check login and password")
-
-                set_cam_options(auth_type, current_cam_ip, current_password, new_cam_ip)
+                set_osd_text(auth_type,current_cam_ip, admin_new_password)
+                #set_cam_options(auth_type, current_cam_ip, current_password, new_cam_ip)
 
             except RuntimeError as e:
                 print(e.message)
