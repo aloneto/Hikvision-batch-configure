@@ -3,24 +3,63 @@ import requests
 import base64
 from requests.auth import HTTPDigestAuth
 from requests.auth import HTTPBasicAuth
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 
 osd_set_text = """\
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <VideoOverlay>
-   <TextOverlayList>
+    <attribute>
+    	<transparent>false</transparent>
+    	<flashing>false</flashing>
+    </attribute>
+    	<fontSize>2</fontSize>
+    <TextOverlayList>
         <TextOverlay>
             <id>1</id>
             <enabled>true</enabled>
-            <positionX>0</positionX>
-            <positionY>0</positionY>
-            <displayText>teste 01</displayText>
+            <positionX>500.000000</positionX>
+            <positionY>32.000000</positionY>
+            <displayText>01</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>2</id>
+            <enabled>true</enabled>
+            <positionX>0.000000</positionX>
+            <positionY>32.000000</positionY>
+            <displayText>02</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>3</id>
+            <enabled>true</enabled>
+            <positionX>500.000000</positionX>
+            <positionY>160.000000</positionY>
+            <displayText>03</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>4</id>
+            <enabled>true</enabled>
+            <positionX>500.000000</positionX>
+            <positionY>320.000000</positionY>
+            <displayText>04</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>5</id>
+            <enabled>true</enabled>
+            <positionX>200.000000</positionX>
+            <positionY>64.000000</positionY>
+            <displayText>05</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>6</id>
+            <enabled>true</enabled>
+            <positionX>400.000000</positionX>
+            <positionY>176.000000</positionY>
+            <displayText>06</displayText>
         </TextOverlay>
     </TextOverlayList>
-</VideoOverlay>
-"""
+</VideoOverlay>"""
 
 ntp_set_request = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -35,19 +74,9 @@ ntp_set_request = """\
 </NTPServerList>
 """
 
-
+"""
 
 request = ElementTree.fromstring(osd_set_text)
-requestntp = ElementTree.fromstring(ntp_set_request)
-#print(request)
-
-server_element = requestntp.find('NTPServer')
-ip_element = server_element.find('ipAddress')
-print(ip_element)
-ip_element.text = '1010101'
-print (ip_element)
-print ("proxima fase")
-
 
 
 master_element = request.find('TextOverlayList')
@@ -58,6 +87,31 @@ id_element = text_element.find('id')
 print(id_element)
 id_element='10'
 
-# master_element.text = '1'
+a =request.iter(id)
+print(a)
+"""
+
+tree = ET.parse('xml.xml')
+root = tree.getroot()
+print (root)
 
 
+for text in root.iter('displayText'):
+    print (text)
+    text.text = 'novo texto'
+    print (text)
+
+
+
+b"<?xml version='1.0' encoding='utf8'?>\n<VideoOverlay>\n    <attribute>\n    \t<transparent>false</transparent>\n    \t<flashing>false</flashing>\n    </attribute>\n    \t<fontSize>4</fontSize>\n    <TextOverlayList>\n        <TextOverlay>\n            <id>1</id>\n            <enabled>true</enabled>\n            <positionX>0.000000</positionX>\n            <positionY>560.000000</positionY>\n            <displayText>texto</displayText>\n        </TextOverlay>\n        <TextOverlay>\n            <id>2</id>\n            <enabled>true</enabled>\n            <positionX>0.000000</positionX>\n            <positionY>500.000000</positionY>\n            <displayText>texto</displayText>\n        </TextOverlay>\n        <TextOverlay>\n            <id>3</id>\n            <enabled>true</enabled>\n            <positionX>0.000000</positionX>\n            <positionY>460.000000</positionY>\n            <displayText>texto</displayText>\n        </TextOverlay>\n        <TextOverlay>\n            <id>4</id>\n            <enabled>true</enabled>\n            <positionX>0.000000</positionX>\n            <positionY>410.000000</positionY>\n            <displayText>texto</displayText>\n        </TextOverlay>\n        <TextOverlay>\n            <id>5</id>\n            <enabled>true</enabled>\n            <positionX>0.000000</positionX>\n            <positionY>360.000000</positionY>\n            <displayText>texto</displayText>\n        </TextOverlay>\n        <TextOverlay>\n            <id>6</id>\n            <enabled>true</enabled>\n            <positionX>0.000000</positionX>\n            <positionY>310.000000</positionY>\n            <displayText>texto</displayText>\n        </TextOverlay>\n    </TextOverlayList>\n</VideoOverlay>"
+
+
+
+"""
+for video in root.findall('TextOverlayList'):
+    rank = video.find('id').text
+    #name = rank.get('TextOverlay')
+    print(rank)
+
+
+"""

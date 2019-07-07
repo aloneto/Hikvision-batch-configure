@@ -195,14 +195,53 @@ osd_set_request = """\
 osd_set_text = """\
 <?xml version="1.0" encoding="UTF-8" ?>
 <VideoOverlay>
-    <fontSize>2</fontSize>
+    <attribute>
+    	<transparent>false</transparent>
+    	<flashing>false</flashing>
+    </attribute>
+    	<fontSize>4</fontSize>
     <TextOverlayList>
         <TextOverlay>
             <id>1</id>
             <enabled>true</enabled>
-            <positionX>0</positionX>
-            <positionY>0</positionY>
-            <displayText>teste 01</displayText>
+            <positionX>0.000000</positionX>
+            <positionY>560.000000</positionY>
+            <displayText>linha 01!!!!!!!!!!!!!!!</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>2</id>
+            <enabled>true</enabled>
+            <positionX>0.000000</positionX>
+            <positionY>500.000000</positionY>
+            <displayText>linha 02!!!!!!!!!!!!!!!</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>3</id>
+            <enabled>true</enabled>
+            <positionX>0.000000</positionX>
+            <positionY>460.000000</positionY>
+            <displayText>linha 03!!!!!!!!!!!!!!!</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>4</id>
+            <enabled>true</enabled>
+            <positionX>0.000000</positionX>
+            <positionY>410.000000</positionY>
+            <displayText>linha 04!!!!!!!!!!!!!!!</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>5</id>
+            <enabled>true</enabled>
+            <positionX>0.000000</positionX>
+            <positionY>360.000000</positionY>
+            <displayText>linha 05!!!!!!!!!!!!!!!</displayText>
+        </TextOverlay>
+        <TextOverlay>
+            <id>6</id>
+            <enabled>true</enabled>
+            <positionX>0.000000</positionX>
+            <positionY>310.000000</positionY>
+            <displayText>linha 06!!!!!!!!!!!!!!!</displayText>
         </TextOverlay>
     </TextOverlayList>
 </VideoOverlay>
@@ -501,9 +540,30 @@ def set_osd(auth_type, cam_ip, password):
 
 def set_osd_text(auth_type, cam_ip, password):
 
-
     request = ElementTree.fromstring(osd_set_text)
 
+    #tree = ElementTree.parse(osd_set_text)
+    #root = request.getroot()
+    #print(root)
+    loop =0
+    while loop == 1:
+        texto=0
+        for text in request.iter('displayText'):
+            texto +=1
+            text.text = 'linha '+str(texto)
+
+
+
+
+
+
+    request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
+
+    process_request(auth_type, cam_ip, osd_url, password, request_data, 'OSD set text')
+
+
+#process_request(auth_type, cam_ip, ip_url, password, request_data, message, 'Reboot Required')
+"""
     master_element = request.find('TextOverlayList')
     print(master_element)
 
@@ -515,17 +575,7 @@ def set_osd_text(auth_type, cam_ip, password):
     text1_element = text_element.find('displayText')
     text1_element.text = 'novo '
 
-
-    request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
-
-    print (request_data)
-    #message = 'IP set to %s, gateway %s' % (new_ip, new_gateway)
-
-    #process_request(auth_type, cam_ip, ip_url, password, request_data, message, 'Reboot Required')
-
-    process_request(auth_type, cam_ip, osd_url, password, osd_set_text, 'OSD set text')
-
-
+"""
 
 
 def set_off_ip_ban_option(auth_type, cam_ip, password):
