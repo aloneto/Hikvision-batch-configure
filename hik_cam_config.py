@@ -17,7 +17,15 @@ from requests.auth import HTTPBasicAuth
 from xml.etree import ElementTree
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
+import threading
+from datetime import datetime, timedelta
+import time
 
+i = 0
+
+lista = [" ", " ", " ", " ", " ", " "]
+
+dateStart = None
 
 cam_ips = [
     # (      OLD     ,        NEW      )
@@ -65,7 +73,7 @@ def set_cam_options(auth_type, current_cam_ip, current_password, new_cam_ip):
 password_url = '/ISAPI/Security/users/1'
 time_url = '/ISAPI/System/time'
 ntp_url = '/ISAPI/System/time/ntpServers'
-osd_url = '/ISAPI/System/Video/inputs/channels/1/overlays'
+osd_url = '/ISAPI/System/Video/inputs/channels/2/overlays'
 video_url = '/ISAPI/Streaming/channels'
 ip_url = '/ISAPI/System/Network/interfaces/1/ipAddress'
 reboot_url = '/ISAPI/System/reboot'
@@ -189,7 +197,6 @@ osd_set_request = """\
 </VideoOverlay>
 """
 
-
 # set overlay text
 
 osd_set_text = """\
@@ -246,7 +253,6 @@ osd_set_text = """\
     </TextOverlayList>
 </VideoOverlay>
 """
-
 
 video_set_request = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -418,6 +424,7 @@ video_user_permissions_set_request = """\
 </UserPermission>
 """
 
+
 # ==================================================================
 
 
@@ -477,7 +484,7 @@ def set_ntp(auth_type, cam_ip, password):
 
 def set_ip(auth_type, cam_ip, new_ip, password):
     request = ElementTree.fromstring(ip_set_request)
-    #print(request)
+    # print(request)
 
     ip_element = request.find('ipAddress')
     ip_element.text = new_ip
@@ -520,7 +527,8 @@ def set_video(auth_type, cam_ip, password):
 
 
 def reboot_cam(auth_type, cam_ip):
-    request = requests.put(get_service_url(cam_ip, reboot_url), auth=get_auth(auth_type, admin_user_name, admin_new_password), data=[])
+    request = requests.put(get_service_url(cam_ip, reboot_url),
+                           auth=get_auth(auth_type, admin_user_name, admin_new_password), data=[])
     answer_text = request.text
 
     print_answer_status('Reboot', answer_text, 'OK')
@@ -530,61 +538,62 @@ def set_osd(auth_type, cam_ip, password):
     process_request(auth_type, cam_ip, osd_url, password, osd_set_request, 'OSD set')
 
 
+# ---------------------------------------------------------------------------------------------------------------------------------
 
 
-#---------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-def set_osd_text(auth_type, cam_ip, password):
-
+def set_osd_text(auth_type, cam_ip, password, msg):
     request = ElementTree.fromstring(osd_set_text)
+    i = 0
+    global dateStart
+    dateStart = datetime.now()
+    # print("iniciado em: ", dateStart)
+    for i in reversed(range(6)):
+        lista[i] = lista[i - 1]
+        #time.sleep(0.1)
+    lista[0] = msg
+    #time.sleep(0.11)
+    if msg != " ":
+        t = threading.Thread(target=timer, args=(0,))
+        t.start()
+        print("thead iniciada\n")
 
-    #tree = ElementTree.parse(osd_set_text)
-    #root = request.getroot()
-    #print(root)
-    loop =0
-    while loop == 1:
-        texto=0
-        for text in request.iter('displayText'):
-            texto +=1
-            text.text = 'linha '+str(texto)
-
-
-
-
-
+    for text in request.iter('displayText'):
+        i += 1
+        text.text = lista[i - 1]
 
     request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
-
     process_request(auth_type, cam_ip, osd_url, password, request_data, 'OSD set text')
 
 
-#process_request(auth_type, cam_ip, ip_url, password, request_data, message, 'Reboot Required')
-"""
-    master_element = request.find('TextOverlayList')
-    print(master_element)
+def timer(contador):
+    for current_cam_ip, new_cam_ip in cam_ips:
+        print('Processing cam %s:' % current_cam_ip)
 
-    text_element = master_element.find('TextOverlay')
-    id_element = text_element.find('id')
-    print(id_element)
-    id_element = '2'
+    current_password = set_activation(current_cam_ip)
+    auth_type = get_auth_type(current_cam_ip, current_password)
 
-    text1_element = text_element.find('displayText')
-    text1_element.text = 'novo '
-
-"""
+    global dateStart
+    time.sleep(0.1)
+    # print("iniciado timer em: ", dateStart)
+    for x in range(0, 5):
+        print("contando tempo")
+        time.sleep(1)
+    dateEnd = datetime.now()
+    if dateEnd > dateStart + timedelta(seconds=5):
+        for i in range(0, 6):
+            set_osd_text(auth_type, current_cam_ip, admin_new_password, " ")
+            print("envia clear!!!!")
 
 
 def set_off_ip_ban_option(auth_type, cam_ip, password):
     if is_ip_ban_option_presented(auth_type, cam_ip, password):
-        process_request(auth_type, cam_ip, ip_ban_option_url, password, ip_ban_option_set_request, 'IP ban option unset')
+        process_request(auth_type, cam_ip, ip_ban_option_url, password, ip_ban_option_set_request,
+                        'IP ban option unset')
 
 
 def is_ip_ban_option_presented(auth_type, cam_ip, password):
-    request = requests.get(get_service_url(cam_ip, ip_ban_option_url), auth=get_auth(auth_type, admin_user_name, password))
+    request = requests.get(get_service_url(cam_ip, ip_ban_option_url),
+                           auth=get_auth(auth_type, admin_user_name, password))
     answer_text = request.text
 
     answer_xml = ElementTree.fromstring(answer_text)
@@ -763,7 +772,8 @@ def set_video_user(auth_type, cam_ip, admin_password):
 
 
 def find_video_user(auth_type, cam_ip, admin_password, user_name):
-    request = requests.get(get_service_url(cam_ip, users_url), auth=get_auth(auth_type, admin_user_name, admin_password))
+    request = requests.get(get_service_url(cam_ip, users_url),
+                           auth=get_auth(auth_type, admin_user_name, admin_password))
     answer_text = request.text
 
     answer_xml = ElementTree.fromstring(answer_text)
@@ -816,7 +826,8 @@ def add_video_user(auth_type, cam_ip, admin_password):
     password_element.text = video_user_password
 
     request_text = ElementTree.tostring(user_element, encoding='utf8', method='xml')
-    answer = requests.post(get_service_url(cam_ip, users_url), auth=get_auth(auth_type, admin_user_name, admin_password), data=request_text)
+    answer = requests.post(get_service_url(cam_ip, users_url),
+                           auth=get_auth(auth_type, admin_user_name, admin_password), data=request_text)
 
     answer_text = answer.text
     print_answer_status('Adding video user', answer_text, 'OK')
@@ -847,11 +858,13 @@ def set_video_user_permissions(auth_type, cam_ip, admin_password, user):
 
     request_text = ElementTree.tostring(permissions, encoding='utf8', method='xml')
 
-    process_request(auth_type, cam_ip, permissons_url + '/' + user.id, admin_password, request_text, 'Video user permissions')
+    process_request(auth_type, cam_ip, permissons_url + '/' + user.id, admin_password, request_text,
+                    'Video user permissions')
 
 
 def find_video_permissions_id(auth_type, cam_ip, admin_password, user):
-    request = requests.get(get_service_url(cam_ip, permissons_url), auth=get_auth(auth_type, admin_user_name, admin_password))
+    request = requests.get(get_service_url(cam_ip, permissons_url),
+                           auth=get_auth(auth_type, admin_user_name, admin_password))
     answer_text = request.text
 
     answer_xml = ElementTree.fromstring(answer_text)
@@ -879,7 +892,8 @@ def find_video_permissions_id(auth_type, cam_ip, admin_password, user):
 
 
 def process_request(auth_type, cam_ip, request_url, password, request_data, operation, expected_status_text='OK'):
-    request = requests.put(get_service_url(cam_ip, request_url), auth=get_auth(auth_type, admin_user_name, password), data=request_data)
+    request = requests.put(get_service_url(cam_ip, request_url), auth=get_auth(auth_type, admin_user_name, password),
+                           data=request_data)
     answer_text = request.text
 
     print_answer_status(operation, answer_text, expected_status_text)
@@ -940,8 +954,14 @@ def main():
                 auth_type = get_auth_type(current_cam_ip, current_password)
                 if auth_type == AuthType.UNAUTHORISED:
                     raise RuntimeError("Unauthorised! Check login and password")
-                set_osd_text(auth_type,current_cam_ip, admin_new_password)
-                #set_cam_options(auth_type, current_cam_ip, current_password, new_cam_ip)
+                set_osd_text(auth_type, current_cam_ip, admin_new_password, "joinha1")
+                set_osd_text(auth_type, current_cam_ip, admin_new_password, "joinha2")
+                set_osd_text(auth_type, current_cam_ip, admin_new_password, "joinha3")
+                set_osd_text(auth_type, current_cam_ip, admin_new_password, "joinha4")
+                set_osd_text(auth_type, current_cam_ip, admin_new_password, "joinha5")
+                set_osd_text(auth_type, current_cam_ip, admin_new_password, "joinha6")
+
+                # set_cam_options(auth_type, current_cam_ip, current_password, new_cam_ip)
 
             except RuntimeError as e:
                 print(e.message)
